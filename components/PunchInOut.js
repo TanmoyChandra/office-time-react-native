@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { View, StyleSheet, Text, Alert } from 'react-native';
 import { Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFonts, Roboto_400Regular, Roboto_700Bold, Roboto_700Regular } from '@expo-google-fonts/roboto';
+// import { useFonts, Roboto_400Regular, Roboto_700Bold, Roboto_700Regular } from '@expo-google-fonts/roboto';
 import { DataContext } from '../contexts/DataContext';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import TimeDisplay from './TimeDisplay';
@@ -16,11 +16,11 @@ const PunchInOut = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const { fetchWeeklyData, fetchEightWeekData } = useContext(DataContext);
 
-  let [fontsLoaded] = useFonts({
-    Roboto_400Regular,
-    Roboto_700Regular,
-    Roboto_700Bold,
-  });
+  // let [fontsLoaded] = useFonts({
+  //   Roboto_400Regular,
+  //   Roboto_700Regular,
+  //   Roboto_700Bold,
+  // });
 
   useEffect(() => {
     const loadPunchInStatus = async () => {
@@ -46,9 +46,9 @@ const PunchInOut = () => {
     return () => clearInterval(interval);
   }, [isPunchedIn, startTime]);
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
-  }
+  // if (!fontsLoaded) {
+  //   return <AppLoading />;
+  // }
 
   const confirmPunchIn = () => {
     Alert.alert(
@@ -149,14 +149,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
     color: '#6750A4',
-    fontFamily: 'Roboto_700Bold',
+    // fontFamily: 'Roboto_700Bold',
   },
   subHeaderText: {
     fontSize: 13,
     fontWeight: 'bold',
     marginTop: -7,
     color: '#6750A4',
-    fontFamily: 'Roboto_700Bold',
+    // fontFamily: 'Roboto_700Bold',
   },
   semiCircleContainer: {
     position: 'relative',
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     fontSize: 25,
     fontWeight: 'bold',
-    fontFamily: 'Roboto_400Regular',
+    // fontFamily: 'Roboto_400Regular',
   },
   button: {
     marginTop: 50,
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 20,
-    fontFamily: 'Roboto_700Regular',
+    // fontFamily: 'Roboto_700Regular',
   },
 });
 
