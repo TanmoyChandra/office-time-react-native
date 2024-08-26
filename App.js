@@ -6,6 +6,7 @@ import { DataContextProvider } from './contexts/DataContext';
 import PunchInOut from './components/PunchInOut';
 import Daily from './components/Daily';
 import Weekly from './components/Weekly';
+import Export from './components/Export'; // Import the new Export component
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const Tab = createBottomTabNavigator();
@@ -71,6 +72,8 @@ export default function App() {
                 iconName = 'today'; // Icon name for Daily
               } else if (route.name === 'Weekly') {
                 iconName = 'calendar-today'; // Icon name for Weekly
+              } else if (route.name === 'Export') {
+                iconName = 'show-chart'; // Icon name for Export
               }
               return <Icon name={iconName} size={size} color={color} />;
             },
@@ -91,6 +94,7 @@ export default function App() {
           <Tab.Screen name="Punch In/Out" component={PunchInOut} />
           <Tab.Screen name="Daily" component={Daily} />
           <Tab.Screen name="Weekly" component={Weekly} />
+          <Tab.Screen name="Export" component={Export} />
         </Tab.Navigator>
       </NavigationContainer>
     </DataContextProvider>
