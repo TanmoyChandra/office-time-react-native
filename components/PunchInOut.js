@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, StyleSheet, Text, Alert } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { Button } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { useFonts, Roboto_400Regular, Roboto_700Bold, Roboto_700Regular } from '@expo-google-fonts/roboto';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { DataContext } from '../contexts/DataContext';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import TimeDisplay from './TimeDisplay';
-import AppLoading from 'expo-app-loading';
 
 const MAX_HOURS = 9 * 60 * 60 * 1000; // 9 hours in milliseconds
 
@@ -14,13 +13,9 @@ const PunchInOut = () => {
   const [isPunchedIn, setIsPunchedIn] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+  const [isPunchOutPickerVisible, setPunchOutPickerVisibility] = useState(false);
   const { fetchWeeklyData, fetchEightWeekData } = useContext(DataContext);
-
-  // let [fontsLoaded] = useFonts({
-  //   Roboto_400Regular,
-  //   Roboto_700Regular,
-  //   Roboto_700Bold,
-  // });
 
   useEffect(() => {
     const loadPunchInStatus = async () => {
@@ -46,61 +41,46 @@ const PunchInOut = () => {
     return () => clearInterval(interval);
   }, [isPunchedIn, startTime]);
 
-  // if (!fontsLoaded) {
-  //   return <AppLoading />;
-  // }
-
-  const confirmPunchIn = () => {
-    Alert.alert(
-      'Punch In Confirmation',
-      'Are you sure you want to punch in?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: handlePunchIn,
-        },
-      ]
-    );
+  const showDatePicker = () => {
+    setDatePickerVisibility(true);
   };
 
-  const confirmPunchOut = () => {
-    Alert.alert(
-      'Punch Out Confirmation',
-      'Are you sure you want to punch out?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: handlePunchOut,
-        },
-      ]
-    );
+  const hideDatePicker = () => {
+    setDatePickerVisibility(false);
   };
 
-  const handlePunchIn = async () => {
-    const currentTime = Date.now();
+  const handlePunchInConfirm = async (selectedTime) => {
+    const currentTime = selectedTime.getTime();
     setStartTime(currentTime);
     setIsPunchedIn(true);
+    setCurrentTime(Date.now() - currentTime);
     await AsyncStorage.setItem('punchInTime', JSON.stringify(currentTime));
+    hideDatePicker();
   };
 
-  const handlePunchOut = async () => {
+  const showPunchOutPicker = () => {
+    setPunchOutPickerVisibility(true);
+  };
+
+  const hidePunchOutPicker = () => {
+    setPunchOutPickerVisibility(false);
+  };
+
+  const handlePunchOutConfirm = async (selectedTime) => {
+    const punchOutTime = selectedTime.getTime();
+    const punchDuration = punchOutTime - startTime;
     setIsPunchedIn(false);
+
     const currentDate = new Date().toISOString().split('T')[0];
     const previousTime = JSON.parse(await AsyncStorage.getItem(currentDate)) || 0;
-    const newTime = previousTime + currentTime;
+    const newTime = previousTime + punchDuration;
+    
     await AsyncStorage.setItem(currentDate, JSON.stringify(newTime));
     setCurrentTime(0);
     await AsyncStorage.removeItem('punchInTime'); // Clear punch-in time
     fetchWeeklyData(); // Refresh the weekly data
     await fetchEightWeekData();
+    hidePunchOutPicker();
   };
 
   const progress = Math.min((currentTime / MAX_HOURS) * 100, 100);
@@ -128,12 +108,26 @@ const PunchInOut = () => {
       <Text style={styles.subHeaderText}>MADE BY TANMOY CHANDRA</Text>
       <Button
         mode="contained"
-        onPress={isPunchedIn ? confirmPunchOut : confirmPunchIn}
+        onPress={isPunchedIn ? showPunchOutPicker : showDatePicker}
         style={styles.button}
         labelStyle={styles.buttonLabel}
       >
         {isPunchedIn ? 'Punch Out' : 'Punch In'}
       </Button>
+
+      <DateTimePickerModal
+        isVisible={isDatePickerVisible}
+        mode="time"
+        onConfirm={handlePunchInConfirm}
+        onCancel={hideDatePicker}
+      />
+
+      <DateTimePickerModal
+        isVisible={isPunchOutPickerVisible}
+        mode="time"
+        onConfirm={handlePunchOutConfirm}
+        onCancel={hidePunchOutPicker}
+      />
     </View>
   );
 };
@@ -149,14 +143,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
     color: '#6750A4',
-    // fontFamily: 'Roboto_700Bold',
   },
   subHeaderText: {
     fontSize: 13,
     fontWeight: 'bold',
     marginTop: -7,
     color: '#6750A4',
-    // fontFamily: 'Roboto_700Bold',
   },
   semiCircleContainer: {
     position: 'relative',
@@ -175,7 +167,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     fontSize: 25,
     fontWeight: 'bold',
-    // fontFamily: 'Roboto_400Regular',
   },
   button: {
     marginTop: 50,
@@ -186,7 +177,6 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 20,
-    // fontFamily: 'Roboto_700Regular',
   },
 });
 
