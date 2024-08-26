@@ -19,11 +19,11 @@ const PunchInOut = () => {
 
   useEffect(() => {
     const loadPunchInStatus = async () => {
-      const storedStartTime = await AsyncStorage.getItem('punchInTime');
-      if (storedStartTime) {
-        const elapsedTime = Date.now() - parseInt(storedStartTime, 10);
-        setStartTime(parseInt(storedStartTime, 10));
-        setCurrentTime(elapsedTime);
+      const dateString = new Date().toISOString().split('T')[0];
+      const data = JSON.parse(await AsyncStorage.getItem(dateString)) || {};
+      if (data.punchInTime) {
+        setStartTime(data.punchInTime);
+        setCurrentTime(Date.now() - data.punchInTime);
         setIsPunchedIn(true);
       }
     };
@@ -54,7 +54,14 @@ const PunchInOut = () => {
     setStartTime(currentTime);
     setIsPunchedIn(true);
     setCurrentTime(Date.now() - currentTime);
-    await AsyncStorage.setItem('punchInTime', JSON.stringify(currentTime));
+    
+    const dateString = new Date().toISOString().split('T')[0];
+    await AsyncStorage.setItem(dateString, JSON.stringify({
+      punchInTime: currentTime,
+      punchOutTime: null,
+      totalHours: 0
+    }));
+    
     hideDatePicker();
   };
 
@@ -71,11 +78,16 @@ const PunchInOut = () => {
     const punchDuration = punchOutTime - startTime;
     setIsPunchedIn(false);
 
-    const currentDate = new Date().toISOString().split('T')[0];
-    const previousTime = JSON.parse(await AsyncStorage.getItem(currentDate)) || 0;
-    const newTime = previousTime + punchDuration;
+    const dateString = new Date().toISOString().split('T')[0];
+    const data = JSON.parse(await AsyncStorage.getItem(dateString)) || { punchInTime: null, punchOutTime: null, totalHours: 0 };
+    const newTotalHours = (data.totalHours || 0) + (punchDuration / (1000 * 60 * 60)); // convert ms to hours
+
+    await AsyncStorage.setItem(dateString, JSON.stringify({
+      ...data,
+      punchOutTime: punchOutTime,
+      totalHours: newTotalHours
+    }));
     
-    await AsyncStorage.setItem(currentDate, JSON.stringify(newTime));
     setCurrentTime(0);
     await AsyncStorage.removeItem('punchInTime'); // Clear punch-in time
     fetchWeeklyData(); // Refresh the weekly data

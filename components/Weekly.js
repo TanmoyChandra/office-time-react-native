@@ -10,6 +10,13 @@ const Weekly = () => {
     fetchEightWeekData();
   }, []);
 
+  // Function to format total hours for display
+  const formatTotalHours = (totalHours) => {
+    return typeof totalHours === 'number'
+      ? `${totalHours.toFixed(2)} hours`
+      : totalHours;
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.dataContainer}>
@@ -17,9 +24,7 @@ const Weekly = () => {
           <View key={week} style={styles.weekContainer}>
             <Text style={styles.weekText}>{week}</Text>
             <Text style={styles.timeText}>
-              {typeof eightWeekData[week] === 'number'
-                ? formatTime(eightWeekData[week])
-                : eightWeekData[week]}
+              {formatTotalHours(eightWeekData[week])}
             </Text>
           </View>
         ))}
