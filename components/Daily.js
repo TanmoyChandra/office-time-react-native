@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Button, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import CalendarPicker from 'react-native-calendar-picker';
 import { DataContext } from '../contexts/DataContext';
 import { format, subWeeks, differenceInHours, differenceInMinutes } from 'date-fns';
 import Modal from 'react-native-modal';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { Card, Title, Paragraph, Button as PaperButton } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Make sure you have this library installed
 
 const Daily = () => {
   const { weeklyData, fetchWeeklyData, updateDailyData } = useContext(DataContext);
@@ -31,9 +33,9 @@ const Daily = () => {
             const data = weeklyData[dateString];
             return {
               date: dateString,
-              punchInTime: data.punchInTime ? new Date(data.punchInTime).toLocaleTimeString() : '-',
-              punchOutTime: data.punchOutTime ? new Date(data.punchOutTime).toLocaleTimeString() : '-',
-              totalHours: data.totalHours || '-',
+              punchInTime: data.punchInTime ? format(new Date(data.punchInTime), 'HH:mm') : '-',
+              punchOutTime: data.punchOutTime ? format(new Date(data.punchOutTime), 'HH:mm') : '-',
+              totalHours: data.totalHours ? data.totalHours.toFixed(2) : '',
             };
           }
           return null;
@@ -66,7 +68,7 @@ const Daily = () => {
 
   const calculateTotalHours = (punchInTime, punchOutTime) => {
     if (!punchInTime || !punchOutTime) return 0;
-    return differenceInHours(punchOutTime, punchInTime) + (differenceInMinutes(punchOutTime, punchInTime) % 60) / 60;
+    return (differenceInHours(punchOutTime, punchInTime) + (differenceInMinutes(punchOutTime, punchInTime) % 60) / 60).toFixed(2);
   };
 
   const handleConfirmPunchIn = (date) => {
@@ -86,24 +88,32 @@ const Daily = () => {
           height={300}
           width={320}
           selectedDayColor="#6750A4"
-          selectedDayTextColor="#fff"
+          selectedDayTextColor="#6750A4"
         />
       </View>
       <View style={styles.dataContainer}>
         {lastFourWeeksData.length > 0 ? (
           lastFourWeeksData.map((item, index) => (
-            <View key={index} style={styles.card}>
-              <Text style={styles.cardTitle}>{format(new Date(item.date), 'MMMM d, yyyy')}</Text>
-              <View style={styles.row}>
-                <Text style={styles.cardText}>Punch In: {item.punchInTime}</Text>
-                <Button title="Edit" onPress={() => handleEdit(item)} />
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.cardText}>Punch Out: {item.punchOutTime}</Text>
-                <Button title="Edit" onPress={() => handleEdit(item)} />
-              </View>
-              <Text style={styles.cardText}>Total Hours: {item.totalHours}</Text>
-            </View>
+            <Card key={index} style={styles.card}>
+              <Card.Content style={styles.cardContent}>
+                <View style={styles.row}>
+                  <View style={styles.column}>
+                    <Title style={styles.date}>{format(new Date(item.date), 'd')}</Title>
+                    <Title style={styles.belowDate}>{format(new Date(item.date), 'MMM').toUpperCase()}</Title>
+                  </View>
+                  <View style={styles.column}> 
+                    <Paragraph style={styles.greyText}>{`In: ${item.punchInTime}`}</Paragraph>
+                    <Paragraph style={styles.greyText}>{`Out: ${item.punchOutTime}`}</Paragraph>
+                  </View>
+                  <View style={styles.column}>
+                    <Paragraph style={styles.bigText}>{item.totalHours} {item.totalHours>0?"hrs":"N/A"}</Paragraph>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.editIcon} onPress={() => handleEdit(item)}>
+                  <Icon name="edit" size={24} color="#6750A4" />
+                </TouchableOpacity>
+              </Card.Content>
+            </Card>
           ))
         ) : (
           <Text style={styles.noDataText}>No data available for the last 4 weeks.</Text>
@@ -114,13 +124,17 @@ const Daily = () => {
       <Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Edit Time</Text>
-          <Button title="Select Punch In Time" onPress={() => setIsPunchInPickerVisible(true)} />
-          <Text>{editedPunchInTime ? editedPunchInTime.toLocaleTimeString() : 'No time selected'}</Text>
-          <Button title="Select Punch Out Time" onPress={() => setIsPunchOutPickerVisible(true)} />
-          <Text>{editedPunchOutTime ? editedPunchOutTime.toLocaleTimeString() : 'No time selected'}</Text>
+          <PaperButton mode="contained" onPress={() => setIsPunchInPickerVisible(true)}>
+            Select Punch In Time
+          </PaperButton>
+          <Text>{editedPunchInTime ? editedPunchInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time selected'}</Text>
+          <PaperButton mode="contained" onPress={() => setIsPunchOutPickerVisible(true)}>
+            Select Punch Out Time
+          </PaperButton>
+          <Text>{editedPunchOutTime ? editedPunchOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'No time selected'}</Text>
           <View style={styles.buttonContainer}>
-            <Button title="Save" onPress={handleSave} />
-            <Button title="Cancel" onPress={() => setIsModalVisible(false)} />
+            <PaperButton mode="outlined" onPress={() => setIsModalVisible(false)}>Cancel</PaperButton>
+            <PaperButton mode="contained" onPress={handleSave}>Save</PaperButton>
           </View>
         </View>
       </Modal>
@@ -145,7 +159,7 @@ const Daily = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    padding: 15,
   },
   calendarContainer: {
     alignItems: 'center',
@@ -155,29 +169,44 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    padding: 15,
     marginBottom: 10,
-    elevation: 3, // Shadow effect for the card
+    marginLeft: 2,
+    marginRight: 2
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  cardText: {
-    fontSize: 16,
-    marginBottom: 5,
-  },
-  noDataText: {
-    fontSize: 16,
-    color: 'red',
+  cardContent: {
+    padding: 15,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  column: {
+    flex: 1,
+    alignItems: 'flex-start',
+    paddingLeft: 10,
+  },
+  date: {
+    fontWeight: 'bold',
+    color: '#6750A4',
+    marginBottom: -5,
+    marginLeft: 5,
+  },
+  belowDate: {
+    fontWeight: 'bold',
+    color: '#6750A4',
+    marginBottom: 5,
+    marginLeft: 5,
+  },
+  bigText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#6750A4',
+  },
+  greyText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#808080',
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -192,7 +221,18 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: 'red',
+  },
+  editIcon: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
   },
 });
+
 
 export default Daily;

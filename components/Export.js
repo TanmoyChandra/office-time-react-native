@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { DataContext } from '../contexts/DataContext';
 import { format, subMonths, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { Card, Title, Paragraph } from 'react-native-paper';
 
 const Export = () => {
   const { weeklyData } = useContext(DataContext);
@@ -18,9 +19,9 @@ const Export = () => {
           const data = weeklyData[dateString];
           return {
             date: dateString,
-            punchInTime: data.punchInTime ? new Date(data.punchInTime).toLocaleTimeString() : '-',
-            punchOutTime: data.punchOutTime ? new Date(data.punchOutTime).toLocaleTimeString() : '-',
-            totalHours: data.totalHours || '-',
+            punchInTime: data.punchInTime ? format(new Date(data.punchInTime), 'HH:mm') : '-',
+            punchOutTime: data.punchOutTime ? format(new Date(data.punchOutTime), 'HH:mm') : '-',
+            totalHours: data.totalHours ? data.totalHours.toFixed(2) : '-',
           };
         })
         .filter(item => {
@@ -42,18 +43,18 @@ const Export = () => {
       <View style={styles.table}>
         {/* Table Header */}
         <View style={styles.row}>
-          <Text style={styles.headerCell}>Date</Text>
-          <Text style={styles.headerCell}>Punch In</Text>
-          <Text style={styles.headerCell}>Punch Out</Text>
-          <Text style={styles.headerCell}>Total Hours</Text>
+          <Title style={[styles.headerCell, styles.boldText]}>Date</Title>
+          <Title style={[styles.headerCell, styles.boldText]}>In</Title>
+          <Title style={[styles.headerCell, styles.boldText]}>Out</Title>
+          <Title style={[styles.headerCell, styles.boldText]}>Total</Title>
         </View>
         {/* Table Rows */}
         {tableData.map((item, index) => (
           <View key={index} style={styles.row}>
-            <Text style={styles.cell}>{item.date}</Text>
-            <Text style={styles.cell}>{item.punchInTime}</Text>
-            <Text style={styles.cell}>{item.punchOutTime}</Text>
-            <Text style={styles.cell}>{item.totalHours}</Text>
+            <Paragraph style={styles.cell}>{item.date}</Paragraph>
+            <Paragraph style={styles.cell}>{item.punchInTime}</Paragraph>
+            <Paragraph style={styles.cell}>{item.punchOutTime}</Paragraph>
+            <Paragraph style={styles.cell}>{item.totalHours}</Paragraph>
           </View>
         ))}
       </View>
@@ -76,18 +77,24 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#ddd',
     paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingHorizontal: 15,
+    alignItems: 'center',
   },
   headerCell: {
     flex: 1,
-    fontWeight: 'bold',
     textAlign: 'center',
+    fontSize: 15,
   },
   cell: {
     flex: 1,
     textAlign: 'center',
+    fontSize: 12,
+  },
+  boldText: {
+    fontWeight: 'bold',
+    color: '#333',
   },
 });
 

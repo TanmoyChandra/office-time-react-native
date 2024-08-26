@@ -1,7 +1,7 @@
 import React, { useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { DataContext } from '../contexts/DataContext';
-import { formatTime } from '../utils/timeUtils';
+import { Card, Title, Paragraph } from 'react-native-paper';
 
 const Weekly = () => {
   const { eightWeekData, fetchEightWeekData } = useContext(DataContext);
@@ -13,7 +13,7 @@ const Weekly = () => {
   // Function to format total hours for display
   const formatTotalHours = (totalHours) => {
     return typeof totalHours === 'number'
-      ? `${totalHours.toFixed(2)} hours`
+      ? `${totalHours.toFixed(2)} Hrs`
       : totalHours;
   };
 
@@ -21,12 +21,16 @@ const Weekly = () => {
     <ScrollView style={styles.container}>
       <View style={styles.dataContainer}>
         {Object.keys(eightWeekData).map((week) => (
-          <View key={week} style={styles.weekContainer}>
-            <Text style={styles.weekText}>{week}</Text>
-            <Text style={styles.timeText}>
-              {formatTotalHours(eightWeekData[week])}
-            </Text>
-          </View>
+          <Card key={week} style={styles.card}>
+            <Card.Content style={styles.cardContent}>
+              <View style={styles.row}>
+                <Title style={styles.dateText}>{week}</Title>
+                <Paragraph style={styles.timeText}>
+                  {formatTotalHours(eightWeekData[week])}
+                </Paragraph>
+              </View>
+            </Card.Content>
+          </Card>
         ))}
       </View>
     </ScrollView>
@@ -35,28 +39,36 @@ const Weekly = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 20,
     backgroundColor: '#f9f9f9', // Background color for better contrast
   },
   dataContainer: {
     marginTop: 20,
   },
-  weekContainer: {
-    flexDirection: 'row', // Align items in a row
-    justifyContent: 'space-between', // Space between date and time
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+  card: {
+    marginBottom: 10,
+    borderRadius: 10,
+    marginEnd: 3,
+    marginStart: 3
   },
-  weekText: {
-    fontSize: 16,
+  cardContent: {
+    padding: 15,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dateText: {
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#333', // Slightly darker text color for better readability
+    color: '#333',
   },
   timeText: {
-    fontSize: 20, // Larger font size for the total time
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#6750A4', // Accent color for the total time
+    color: '#6750A4',
   },
 });
 
