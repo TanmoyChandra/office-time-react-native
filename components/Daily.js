@@ -4,14 +4,17 @@ import CalendarPicker from 'react-native-calendar-picker';
 import { DataContext } from '../contexts/DataContext';
 import { format, subWeeks, differenceInHours, differenceInMinutes } from 'date-fns';
 import Modal from 'react-native-modal';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
 const Daily = () => {
   const { weeklyData, fetchWeeklyData, updateDailyData } = useContext(DataContext);
   const [lastFourWeeksData, setLastFourWeeksData] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [editedPunchInTime, setEditedPunchInTime] = useState('');
-  const [editedPunchOutTime, setEditedPunchOutTime] = useState('');
+  const [editedPunchInTime, setEditedPunchInTime] = useState(null);
+  const [editedPunchOutTime, setEditedPunchOutTime] = useState(null);
+  const [isPunchInPickerVisible, setIsPunchInPickerVisible] = useState(false);
+  const [isPunchOutPickerVisible, setIsPunchOutPickerVisible] = useState(false);
 
   useEffect(() => {
     fetchWeeklyData(); // Fetch data when the component mounts
@@ -44,28 +47,36 @@ const Daily = () => {
 
   const handleEdit = (item) => {
     setSelectedItem(item);
-    setEditedPunchInTime(item.punchInTime);
-    setEditedPunchOutTime(item.punchOutTime);
+    setEditedPunchInTime(item.punchInTime ? new Date(`1970-01-01T${item.punchInTime}:00`) : null);
+    setEditedPunchOutTime(item.punchOutTime ? new Date(`1970-01-01T${item.punchOutTime}:00`) : null);
     setIsModalVisible(true);
-  };
-
-  const calculateTotalHours = (punchInTime, punchOutTime) => {
-    if (!punchInTime || !punchOutTime) return 0;
-    const punchIn = new Date(`1970-01-01T${punchInTime}:00`);
-    const punchOut = new Date(`1970-01-01T${punchOutTime}:00`);
-    return differenceInHours(punchOut, punchIn) + (differenceInMinutes(punchOut, punchIn) % 60) / 60;
   };
 
   const handleSave = async () => {
     const totalHours = calculateTotalHours(editedPunchInTime, editedPunchOutTime);
     const updatedData = {
       ...weeklyData[selectedItem.date],
-      punchInTime: editedPunchInTime ? new Date(`1970-01-01T${editedPunchInTime}:00`).toISOString() : null,
-      punchOutTime: editedPunchOutTime ? new Date(`1970-01-01T${editedPunchOutTime}:00`).toISOString() : null,
+      punchInTime: editedPunchInTime ? editedPunchInTime.toISOString() : null,
+      punchOutTime: editedPunchOutTime ? editedPunchOutTime.toISOString() : null,
       totalHours: totalHours || 0,
     };
     await updateDailyData(selectedItem.date, updatedData);
     setIsModalVisible(false);
+  };
+
+  const calculateTotalHours = (punchInTime, punchOutTime) => {
+    if (!punchInTime || !punchOutTime) return 0;
+    return differenceInHours(punchOutTime, punchInTime) + (differenceInMinutes(punchOutTime, punchInTime) % 60) / 60;
+  };
+
+  const handleConfirmPunchIn = (date) => {
+    setEditedPunchInTime(date);
+    setIsPunchInPickerVisible(false);
+  };
+
+  const handleConfirmPunchOut = (date) => {
+    setEditedPunchOutTime(date);
+    setIsPunchOutPickerVisible(false);
   };
 
   return (
@@ -103,24 +114,30 @@ const Daily = () => {
       <Modal isVisible={isModalVisible} onBackdropPress={() => setIsModalVisible(false)}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Edit Time</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Punch In Time (HH:MM)"
-            value={editedPunchInTime}
-            onChangeText={setEditedPunchInTime}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Punch Out Time (HH:MM)"
-            value={editedPunchOutTime}
-            onChangeText={setEditedPunchOutTime}
-          />
+          <Button title="Select Punch In Time" onPress={() => setIsPunchInPickerVisible(true)} />
+          <Text>{editedPunchInTime ? editedPunchInTime.toLocaleTimeString() : 'No time selected'}</Text>
+          <Button title="Select Punch Out Time" onPress={() => setIsPunchOutPickerVisible(true)} />
+          <Text>{editedPunchOutTime ? editedPunchOutTime.toLocaleTimeString() : 'No time selected'}</Text>
           <View style={styles.buttonContainer}>
             <Button title="Save" onPress={handleSave} />
             <Button title="Cancel" onPress={() => setIsModalVisible(false)} />
           </View>
         </View>
       </Modal>
+
+      {/* Time Picker Modals */}
+      <DateTimePickerModal
+        isVisible={isPunchInPickerVisible}
+        mode="time"
+        onConfirm={handleConfirmPunchIn}
+        onCancel={() => setIsPunchInPickerVisible(false)}
+      />
+      <DateTimePickerModal
+        isVisible={isPunchOutPickerVisible}
+        mode="time"
+        onConfirm={handleConfirmPunchOut}
+        onCancel={() => setIsPunchOutPickerVisible(false)}
+      />
     </ScrollView>
   );
 };
@@ -171,12 +188,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    marginBottom: 10,
-    padding: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
